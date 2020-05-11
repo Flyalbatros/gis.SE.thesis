@@ -1,0 +1,25 @@
+# The links from C:\Users\P.A. Ruben\Desktop\thesis SEC\12 - cFinder\CFinder-2.0.6--1448\C:\Users\P.A. Ruben\Desktop\thesis SEC\1 - SE data\exports\test_export_short.txt
+# at no lower link weight threshold,
+# and at no upper link weight threshold.
+# Links were treated as undirected.
+# No time limit was set for the clique search.
+# (mutual links and self-links were removed)
+
+1072 115
+1072 145
+1072 150
+1072 31
+1072 539
+1072 57
+115 150
+115 442
+150 442
+187 7
+264 115
+264 150
+264 337
+264 442
+337 115
+337 150
+337 442
+432 162
