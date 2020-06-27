@@ -1,5 +1,5 @@
-drop table if exists posts_ES;
-create table posts_ES (
+drop table if exists posts_GIS;
+create table posts_GIS (
 row_Id int,
 PostTypeId int,
 ParentId int,

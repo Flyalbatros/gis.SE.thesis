@@ -28,16 +28,10 @@ class xml_reader(object):
                 #prepare data and variables
                 str_dict = dict()
                 str_dict['Id'] = 'None'
-                str_dict['Reputation'] = 'None'
-                str_dict['CreationDate'] = 'None'
-                str_dict['DisplayName'] = 'None'
-                str_dict['LastAccessDate'] = 'None'
-                str_dict['Location'] = 'None'
-                str_dict['AboutMe'] = 'None'
-                str_dict['Views'] = 'None'
-                str_dict['UpVotes'] = 'None'
-                str_dict['DownVotes'] = 'None'
-                str_dict['AccountId'] = '-99'
+                str_dict['TagName'] = 'None'
+                str_dict['Count'] = '-99'
+                str_dict['ExcerptPostId'] = '-99'
+                str_dict['WikiPostId'] = '-99'
                 first_quote = line.find('"')
                 previous_quote = 7
                 # now the actual data extraction
@@ -62,12 +56,25 @@ if __name__=="__main__":
     target_db = DB_connection("gisSE", "127.0.0.1")
     #file = open("users.xml", "r")
     #print(file.readline())
-    user_file = xml_reader("Users.xml")
+    user_file = xml_reader("Tags.xml")
     command_strs = user_file.output_line()
     for data_dict in command_strs:
         #print(data_dict)
-        data_string = "'{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}'".format(
-             data_dict['Id'], data_dict['Reputation'], data_dict['CreationDate'],data_dict['DisplayName'],data_dict['LastAccessDate'],data_dict['Location'],data_dict['AboutMe'],data_dict['Views'], data_dict['UpVotes'], data_dict['DownVotes'], data_dict['AccountId'])
-        #print(data_string)
-        target_db.query_and_return("Insert into users_GIS values ("+data_string+")")
+        data_string = "'{0}','{1}','{2}','{3}','{4}'".format(
+             data_dict['Id'], data_dict['TagName'], data_dict['Count'], data_dict['ExcerptPostId'], data_dict['WikiPostId'])
+        target_db.query_and_return("Insert into tags_GIS values ("+data_string+")")
     target_db.save()
+
+# if __name__=="__main__":
+#     target_db = DB_connection("SE_GIS", "127.0.0.1")
+#     #file = open("users.xml", "r")
+#     #print(file.readline())
+#     user_file = xml_reader("Posts.xml")
+#     command_strs = user_file.output_line()
+#     for data_dict in command_strs:
+#         print(data_dict)
+#         data_string = "'{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}', '{13}'".format(
+#              data_dict['Id'], data_dict['PostTypeId'], data_dict['AcceptedAnswerId'],data_dict['CreationDate'],data_dict['Score'],data_dict['ViewCount'],data_dict['Body'],data_dict['OwnerUserId'], data_dict['LastActivityDate'], data_dict['Tags'], data_dict['Title'], data_dict['AnswerCount'], data_dict['CommentCount'], data_dict['FavoriteCount'])
+#         print(data_string)
+#         target_db.query_and_return("Insert into posts_GIS values ("+data_string+")")
+#     target_db.save()

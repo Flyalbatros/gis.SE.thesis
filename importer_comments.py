@@ -54,7 +54,7 @@ class xml_reader(object):
         return output_strs
 
 if __name__=="__main__":
-    target_db = DB_connection("SE_GIS", "127.0.0.1")
+    target_db = DB_connection("gisSE", "127.0.0.1")
     #file = open("users.xml", "r")
     #print(file.readline())
     user_file = xml_reader("Comments.xml")
