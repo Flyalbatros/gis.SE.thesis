@@ -51,8 +51,8 @@ group by t.row_id;
 ---selection: the 50 tags which are most used--- alternative? identify and filter out frequent tag combinations?
 select count(*) from posts_gis where posttypeid=1; ---125167 questions in total---
 select count(*) from sampling_qora_co_prep where typeid=1; ---77662 question active in timeframe, with at least one comment---
-drop view if exists sampling_top_50_tags;
-create view sampling_top_50_tags as
+drop table if exists sampling_top_50_tags;
+create table sampling_top_50_tags as
 select row_id, post_count from sampling_tag_count_1719 order by post_count desc limit 50;
 select count(distinct(p.question_id)) from sampling_top_50_tags t join sampling_q_co_prep p on t.row_id=any(p.agg_tag_ids); ---17908 active question
 ---68067/77662=87.6%---
@@ -71,10 +71,101 @@ select count(*)/77662.0 from sampling_analysis_question_comments where question_
 select count(*)/77662.0 from sampling_analysis_question_comments where question_comments<9; ---98.5%, 			  
 
 ---select the questions to be analysed, budget=50 questions---
-select count(*)/19929.0 from sampling_analysis_question_comments where question_comments=8;	---2% = 2 questions			  
-select count(*)/19929.0 from sampling_analysis_question_comments where question_comments=7;	---1.1% = 1 question				  
----??? continue like this???
+select count(*) from sampling_analysis_question_comments where question_comments=2 and question_id in (select * from sampling_2nd_comment_is_author);					  
+---4120				  
+select count(*) from sampling_analysis_question_comments where question_comments=3;	---5144
+select count(*) from sampling_analysis_question_comments where question_comments=4;	---3574
+select count(*) from sampling_analysis_question_comments where question_comments=5;	---2340
+select count(*) from sampling_analysis_question_comments where question_comments=6;	---1548	
+select count(*) from sampling_analysis_question_comments where question_comments=7;	---1028			  
+select count(*) from sampling_analysis_question_comments where question_comments=8;	---641			  
+select count(*) from sampling_analysis_question_comments where question_comments=9;	---379			  
+select count(*) from sampling_analysis_question_comments where question_comments=10;	---264
+---
+create index sampling_top50_ids on sampling_top_50_tags(row_id);
+drop table if exists sampling_selected_questions;
+create table sampling_selected_questions 
+(question_id int);
+drop table if exists sampling_selected_q_tag_log;
+create table sampling_selected_q_tag_log
+(tag_id int);
+					  
+drop table if exists inserter;
+create table inserter as
+select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=10 order by random() limit 1;
+insert into sampling_selected_questions					  
+select question_id from inserter;
+insert into sampling_selected_q_tag_log
+select row_id from inserter;
 
+drop table if exists inserter;
+create table inserter as
+select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=9 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 1;
+insert into sampling_selected_questions					  
+select question_id from inserter;
+insert into sampling_selected_q_tag_log
+select row_id from inserter;
+
+drop table if exists inserter;
+create table inserter as
+select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=8 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 2;
+insert into sampling_selected_questions					  
+select question_id from inserter;
+insert into sampling_selected_q_tag_log
+select row_id from inserter;
+					  
+drop table if exists inserter;
+create table inserter as
+select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=7 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 3;
+insert into sampling_selected_questions					  
+select question_id from inserter;
+insert into sampling_selected_q_tag_log
+select row_id from inserter;
+					  
+drop table if exists inserter;
+create table inserter as
+select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=6 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 4;
+insert into sampling_selected_questions					  
+select question_id from inserter;
+insert into sampling_selected_q_tag_log
+select row_id from inserter;
+					  
+drop table if exists inserter;
+create table inserter as
+select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=5 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 6;
+insert into sampling_selected_questions					  
+select question_id from inserter;
+insert into sampling_selected_q_tag_log
+select row_id from inserter;
+
+drop table if exists inserter;
+create table inserter as
+select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=4 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 9;
+insert into sampling_selected_questions					  
+select question_id from inserter;
+insert into sampling_selected_q_tag_log
+select row_id from inserter;
+
+drop table if exists inserter;
+create table inserter as
+select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=3 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 13;
+insert into sampling_selected_questions					  
+select question_id from inserter;
+insert into sampling_selected_q_tag_log
+select row_id from inserter;
+
+BEGIN					  
+FOR counter IN 1..5 LOOP;
+	create table inserter as
+	select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=2 and question_id in (select * from sampling_2nd_comment_is_author) and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 11;
+	insert into sampling_selected_questions					  
+	select question_id from inserter;
+	insert into sampling_selected_q_tag_log
+	select row_id from inserter;
+	counter := counter + 1 ;				  
+end loop;
+					  
+select distinct(row_id) from sampling_selected_q_tag_log
 					  
 ---identify ditribution of the number of comments on answers---
 drop table if exists sampling_analysis_answer_comments;
@@ -88,15 +179,26 @@ select count(*)/96775.0 from sampling_analysis_answer_comments where answer_comm
 ---12.0% eligible
 select count(*)/96775.0 from sampling_analysis_answer_comments where answer_comments<5; ---96.7%
 select count(*)/96775.0 from sampling_analysis_answer_comments where answer_comments<6; ---96.1%
-					  
----stop here---
-drop view if exists sampling_question_discussions;
-select distinct on (t.row_id)
-t.row_id, s.question_id, s.question_comments, s.agg_tag_ids
-from sampling_top_50_tags t join gstats_qa_co_prep s on t.row_id= any(s.agg_tag_ids)
-order by t.row_id, s.question_comments desc;
+---final distribution---
+select count(*) from sampling_analysis_answer_comments where answer_comments=2 and answer_id in (select * from sampling_2nd_comment_is_author); 
+---3667
+select count(*) from sampling_analysis_answer_comments where answer_comments=3;
+---2897
+select count(*) from sampling_analysis_answer_comments where answer_comments=4;
+---1856
+select count(*) from sampling_analysis_answer_comments where answer_comments=5;
+---1096
+select count(*) from sampling_analysis_answer_comments where answer_comments=6;
+---716
+select count(*) from sampling_analysis_answer_comments where answer_comments=7;
+---477
+select count(*) from sampling_analysis_answer_comments where answer_comments=8;
+--294
+select count(*) from sampling_analysis_answer_comments where answer_comments=9;
+---188
+select count(*) from sampling_analysis_answer_comments where answer_comments=10;
+---118
+select count(*) from sampling_analysis_answer_comments where answer_comments=11;
 
-select * from gstats_qa_co_prep where 2 = any(agg_tag_ids)
-order by question_comments desc;
-
-select * from posts_gis where row_id=106900;
+---now let's perform the selection of threads---
+select * from sampling_qora_co_prep where typeid=2 and question_comments=11 and ;
