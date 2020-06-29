@@ -161,6 +161,9 @@ create index question_id_idex on gstats_qa_prep(question_id);
 drop index if exists answer_id_idex;
 create index answer_id_idex on gstats_qa_prep(answerid);
 
+---the reaction time between qs and 1st comment and as and 1st comment is not representative to split chains...															 
+															 
+															 
 ---end here----															 
 select posttypeid, count(*) from posts_gis where owneruserid=-1 group by posttypeid;
 
