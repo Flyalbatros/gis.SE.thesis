@@ -105,67 +105,81 @@ insert into sampling_selected_questions
 select question_id from inserter;
 insert into sampling_selected_q_tag_log
 select row_id from inserter;
-
-drop table if exists inserter;
-create table inserter as
-select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=8 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 2;
-insert into sampling_selected_questions					  
-select question_id from inserter;
-insert into sampling_selected_q_tag_log
-select row_id from inserter;
 					  
-drop table if exists inserter;
-create table inserter as
-select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=7 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 3;
-insert into sampling_selected_questions					  
-select question_id from inserter;
-insert into sampling_selected_q_tag_log
-select row_id from inserter;
-					  
-drop table if exists inserter;
-create table inserter as
-select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=6 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 4;
-insert into sampling_selected_questions					  
-select question_id from inserter;
-insert into sampling_selected_q_tag_log
-select row_id from inserter;
-					  
-drop table if exists inserter;
-create table inserter as
-select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=5 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 6;
-insert into sampling_selected_questions					  
-select question_id from inserter;
-insert into sampling_selected_q_tag_log
-select row_id from inserter;
-
-drop table if exists inserter;
-create table inserter as
-select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=4 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 9;
-insert into sampling_selected_questions					  
-select question_id from inserter;
-insert into sampling_selected_q_tag_log
-select row_id from inserter;
-
-drop table if exists inserter;
-create table inserter as
-select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=3 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 13;
-insert into sampling_selected_questions					  
-select question_id from inserter;
-insert into sampling_selected_q_tag_log
-select row_id from inserter;
-
+DO $$					  
 BEGIN					  
-FOR counter IN 1..5 LOOP;
+FOR counter IN 1..2 LOOP
+	drop table if exists inserter;
 	create table inserter as
-	select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=2 and question_id in (select * from sampling_2nd_comment_is_author) and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 11;
+	select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=8 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 1;
 	insert into sampling_selected_questions					  
 	select question_id from inserter;
 	insert into sampling_selected_q_tag_log
 	select row_id from inserter;
-	counter := counter + 1 ;				  
+end loop;
+				  				  
+FOR counter IN 1..3 LOOP
+	drop table if exists inserter;
+	create table inserter as
+	select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=7 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 1;
+	insert into sampling_selected_questions					  
+	select question_id from inserter;
+	insert into sampling_selected_q_tag_log
+	select row_id from inserter;
 end loop;
 					  
-select distinct(row_id) from sampling_selected_q_tag_log
+FOR counter IN 1..4 LOOP
+	drop table if exists inserter;
+	create table inserter as
+	select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=6 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 1;
+	insert into sampling_selected_questions					  
+	select question_id from inserter;
+	insert into sampling_selected_q_tag_log
+	select row_id from inserter;
+end loop;
+					  
+FOR counter IN 1..6 LOOP
+	drop table if exists inserter;
+	create table inserter as
+	select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=5 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 1;
+	insert into sampling_selected_questions					  
+	select question_id from inserter;
+	insert into sampling_selected_q_tag_log
+	select row_id from inserter;
+end loop;
+					  
+FOR counter IN 1..9 LOOP
+	drop table if exists inserter;
+	create table inserter as
+	select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=4 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 1;
+	insert into sampling_selected_questions					  
+	select question_id from inserter;
+	insert into sampling_selected_q_tag_log
+	select row_id from inserter;
+end loop;
+				  
+FOR counter IN 1..13 LOOP
+	drop table if exists inserter;
+	create table inserter as
+	select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=3 and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 1;
+	insert into sampling_selected_questions					  
+	select question_id from inserter;
+	insert into sampling_selected_q_tag_log
+	select row_id from inserter;
+end loop;
+				  
+FOR counter IN 1..11 LOOP
+	drop table if exists inserter;
+	create table inserter as
+	select t.row_id, s.question_id from sampling_qora_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and question_comments=2 and question_id in (select * from sampling_2nd_comment_is_author) and t.row_id not in (select * from sampling_selected_q_tag_log) order by random() limit 1;
+	insert into sampling_selected_questions					  
+	select question_id from inserter;
+	insert into sampling_selected_q_tag_log
+	select row_id from inserter;
+end loop;
+END; $$
+					  
+select * from sampling_selected_questions;
 					  
 ---identify ditribution of the number of comments on answers---
 drop table if exists sampling_analysis_answer_comments;
@@ -201,4 +215,96 @@ select count(*) from sampling_analysis_answer_comments where answer_comments=10;
 select count(*) from sampling_analysis_answer_comments where answer_comments=11;
 
 ---now let's perform the selection of threads---
-select * from sampling_qora_co_prep where typeid=2 and question_comments=11 and ;
+drop table if exists sampling_selected_answers;
+create table sampling_selected_answers 
+(question_id int);
+drop table if exists sampling_selected_a_tag_log;
+create table sampling_selected_a_tag_log
+(tag_id int);
+					  
+drop table if exists inserter;
+create table inserter as
+select t.row_id, s.answerid from sampling_qa_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and answer_comments=10 order by random() limit 1;
+insert into sampling_selected_answers					  
+select answerid from inserter;
+insert into sampling_selected_a_tag_log
+select row_id from inserter;
+
+drop table if exists inserter;
+create table inserter as
+select t.row_id, s.answerid from sampling_qa_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and answer_comments=9 and t.row_id not in (select * from sampling_selected_a_tag_log) order by random() limit 1;
+insert into sampling_selected_answers					  
+select answerid from inserter;
+insert into sampling_selected_a_tag_log
+select row_id from inserter;
+
+drop table if exists inserter;
+create table inserter as
+select t.row_id, s.answerid from sampling_qa_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and answer_comments=8 and t.row_id not in (select * from sampling_selected_a_tag_log) order by random() limit 1;
+insert into sampling_selected_answers					  
+select answerid from inserter;
+insert into sampling_selected_a_tag_log
+select row_id from inserter;
+					  
+DO $$					  
+BEGIN					  
+FOR counter IN 1..2 LOOP
+	drop table if exists inserter;
+	create table inserter as
+	select t.row_id, s.answerid from sampling_qa_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and answer_comments=7 and t.row_id not in (select * from sampling_selected_a_tag_log) order by random() limit 1;
+	insert into sampling_selected_answers					  
+	select answerid from inserter;
+	insert into sampling_selected_a_tag_log
+	select row_id from inserter;
+end loop;
+
+FOR counter IN 1..3 LOOP
+	drop table if exists inserter;
+	create table inserter as
+	select t.row_id, s.answerid from sampling_qa_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and answer_comments=6 and t.row_id not in (select * from sampling_selected_a_tag_log) order by random() limit 1;
+	insert into sampling_selected_answers					  
+	select answerid from inserter;
+	insert into sampling_selected_a_tag_log
+	select row_id from inserter;
+end loop;
+					  
+FOR counter IN 1..5 LOOP
+	drop table if exists inserter;
+	create table inserter as
+	select t.row_id, s.answerid from sampling_qa_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and answer_comments=5 and t.row_id not in (select * from sampling_selected_a_tag_log) order by random() limit 1;
+	insert into sampling_selected_answers					  
+	select answerid from inserter;
+	insert into sampling_selected_a_tag_log
+	select row_id from inserter;
+end loop;
+					  
+FOR counter IN 1..8 LOOP
+	drop table if exists inserter;
+	create table inserter as
+	select t.row_id, s.answerid from sampling_qa_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and answer_comments=4 and t.row_id not in (select * from sampling_selected_a_tag_log) order by random() limit 1;
+	insert into sampling_selected_answers					  
+	select answerid from inserter;
+	insert into sampling_selected_a_tag_log
+	select row_id from inserter;
+end loop;
+					  
+FOR counter IN 1..13 LOOP
+	drop table if exists inserter;
+	create table inserter as
+	select t.row_id, s.answerid from sampling_qa_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and answer_comments=3 and t.row_id not in (select * from sampling_selected_a_tag_log) order by random() limit 1;
+	insert into sampling_selected_answers					  
+	select answerid from inserter;
+	insert into sampling_selected_a_tag_log
+	select row_id from inserter;
+end loop;
+					  
+FOR counter IN 1..16 LOOP
+	drop table if exists inserter;
+	create table inserter as
+	select t.row_id, s.answerid from sampling_qa_co_prep s join sampling_top_50_tags t on t.row_id=any(s.agg_tag_ids) where typeid=1 and answer_comments=2 and t.row_id not in (select * from sampling_selected_a_tag_log) and s.answerid in (select * from sampling_2nd_comment_is_author) order by random() limit 1;
+	insert into sampling_selected_answers					  
+	select answerid from inserter;
+	insert into sampling_selected_a_tag_log
+	select row_id from inserter;
+end loop;
+END; $$
