@@ -213,7 +213,7 @@ select * from list_splitting_interact_chains where count_users_two_comments=2;
 
 drop table if exists list_splitting_very_high_interact_chains; 
 create table list_splitting_very_high_interact_chains as									   
-select * from list_splitting_interact_chains where count_users_two_comments=3;	
+select * from list_splitting_interact_chains where count_users_two_comments>2;	
 
 drop table if exists list_splitting_all_high_interact_chains; 
 create table list_splitting_all_high_interact_chains as									   

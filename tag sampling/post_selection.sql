@@ -13,15 +13,39 @@ group by post_id;
 
 ---now let's get the number of comments per question/answer combination---
 ---get the date of the most recent comment on the question---
-drop view if exists sampling_last_commentdate_prep;
-create view sampling_last_commentdate_prep as
+drop view if exists sampling_last_commentdate_qc_prep;
+create view sampling_last_commentdate_qc_prep as
 select distinct on (c.postid) c.postid, c.creationdate as last_comment_date from comments_gis c order by c.postid, c.creationdate desc;
+
+drop view if exists sampling_last_commentdate_ac_prep cascade;
+create view sampling_last_commentdate_ac_prep as
+select distinct on (p.parentid) p.parentid, c.creationdate as last_comment_date from comments_gis c left join posts_gis p on c.postid=p.row_id where p.parentid<>-99 order by p.parentid, c.creationdate desc;
+
+drop view if exists sampling_last_commentdate_a_prep;
+create view sampling_last_commentdate_a_prep as
+select distinct on (c.parentid) c.parentid, c.creationdate as last_comment_date from posts_gis c where parentid<>-99 order by c.parentid, c.creationdate desc;
+
+drop view if exists sampling_last_commentdate_prep_union;
+create view sampling_last_commentdate_prep_union as 
+select * from sampling_last_commentdate_qc_prep
+union 
+select * from sampling_last_commentdate_ac_prep
+union
+select * from sampling_last_commentdate_a_prep
+order by postid, last_comment_date desc;
+
+drop table if exists sampling_last_commentdate_prep;
+create table sampling_last_commentdate_prep as
+select distinct on (postid)
+postid, last_comment_date 
+from sampling_last_commentdate_prep_union;
+
 
 ---get the list of all questions, with or without answers (when no answer there might still be comments)---
 drop table if exists sampling_qa_prep;
-create table sampling_qa_prep as select p1.row_id as question_id, p1.posttypeid typeid, p1.score as q_score, p1.creationdate as question_creationdate, p1.LastEditorUserId>0 as q_edited, p1.CommunityOwnedDate>'0001-01-01 00:00:00' as wiki, p2.row_Id as answerId, p2.LastEditorUserId>0 as a_edited, p1.AcceptedAnswerId, p2.score as a_score, p2.creationdate as answer_creationdate, p1.viewcount, p1.owneruserid as question_user_id, p2.owneruserid as answer_user_id
+create table sampling_qa_prep as select p1.row_id as question_id, p1.parentid, p1.posttypeid typeid, p1.score as q_score, p1.creationdate as question_creationdate, p1.LastEditorUserId>0 as q_edited, p1.CommunityOwnedDate>'0001-01-01 00:00:00' as wiki, p2.row_Id as answerId, p2.LastEditorUserId>0 as a_edited, p1.AcceptedAnswerId, p2.score as a_score, p2.creationdate as answer_creationdate, p1.viewcount, p1.owneruserid as question_user_id, p2.owneruserid as answer_user_id
 from posts_gis p1 left join posts_gis p2 on p1.row_id=p2.parentId
-group by p1.row_id, p1.posttypeid, p1.creationdate, p1.LastEditorUserId, p1.CommunityOwnedDate, p1.AcceptedAnswerId, p1.score, p1.viewcount, p1.owneruserid, p2.row_Id, p2.creationdate, p2.LastEditorUserId, p2.owneruserid, p2.score
+group by p1.row_id, p1.posttypeid, p1.creationdate, p1.LastEditorUserId, p1.CommunityOwnedDate, p1.AcceptedAnswerId, p1.score, p1.viewcount, p1.owneruserid, p2.row_Id, p2.creationdate, p2.LastEditorUserId, p2.owneruserid, p2.score, p1.parentid
 order by question_id, answer_creationdate;
 
 ---now let's get the number of comments for each---
@@ -29,10 +53,10 @@ drop table if exists sampling_qa_co_prep cascade;
 create table sampling_qa_co_prep as 
 select s1.*, t.agg_tag_ids, (Select count(*) from comments_GIS c where c.PostId=s1.question_id) as question_comments, (Select count(*) from comments_GIS c where c.PostId=s1.answerid) as answer_comments, c.last_comment_date
 from sampling_qa_prep s1 left join sampling_last_commentdate_prep c on c.postid=s1.question_id left join sampling_post_tags t on t.post_id=s1.question_id 
-group by s1.question_id, s1.typeid, s1.question_creationdate, s1.q_edited, s1.wiki, s1.answerId, s1.AcceptedAnswerId, s1.answer_creationdate, s1.a_edited, s1.q_score, s1.a_score, s1.viewcount, s1.question_user_id, s1.answer_user_id, t.agg_tag_ids, c.last_comment_date;
+group by s1.question_id, s1.parentid, s1.typeid, s1.question_creationdate, s1.q_edited, s1.wiki, s1.answerId, s1.AcceptedAnswerId, s1.answer_creationdate, s1.a_edited, s1.q_score, s1.a_score, s1.viewcount, s1.question_user_id, s1.answer_user_id, t.agg_tag_ids, c.last_comment_date;
 
 delete from sampling_qa_co_prep
-where extract(year from question_creationdate)>2019 or extract(year from last_comment_date)<2017;
+where (extract(year from question_creationdate)>2019 or extract(year from last_comment_date)<2017);
 
 drop view if exists sampling_qora_co_prep;
 create view sampling_qora_co_prep as
