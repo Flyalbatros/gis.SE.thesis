@@ -1,5 +1,5 @@
-drop table if exists edits_GIS;
-create table edits_GIS (
+drop table if exists edits_GIS_2;
+create table edits_GIS_2 (
 row_Id int,
 PostHistoryTypeId int, 
 PostId int, 

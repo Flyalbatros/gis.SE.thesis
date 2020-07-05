@@ -70,7 +70,7 @@ if __name__=="__main__":
     command_strs = user_file.output_line()
     for data_dict in command_strs:
         data_string = "'{0}','{1}','{2}','{3}','{4}','{5}','{6}'".format(
-             data_dict['Id'], data_dict['PostHistoryTypeId'], data_dict['PostId'], data_dict['RevisionGUID'], data_dict['CreationDate'], data_dict['UserId'], data_dict['UserDisplayName'], data_dict['Comment'])
+             data_dict['Id'], data_dict['PostHistoryTypeId'], data_dict['PostId'], data_dict['RevisionGUID'], data_dict['CreationDate'], data_dict['UserId'], data_dict['Comment'], data_dict['RollbackGUID'], data_dict['Text'])
         #print(data_string)
         rollback_string =",'{0}'".format(data_dict['RollbackGUID'])
         text_string = ",'{0}'".format(data_dict['Text'])
@@ -78,7 +78,7 @@ if __name__=="__main__":
         #if data_dict['PostHistoryTypeId']=='8':
             #print(data_dict['RollbackGUID'])
             #print(total_string)
-        target_db.query_and_return("Insert into edits_GIS values ("+total_string+")")
+        target_db.query_and_return("Insert into edits_GIS_2 values ("+total_string+")")
     target_db.save()
 
 # if __name__=="__main__":

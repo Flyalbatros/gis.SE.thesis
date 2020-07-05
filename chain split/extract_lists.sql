@@ -6,7 +6,7 @@ select * from sampling_qora_co_prep s join comments_gis c on s.question_id = c.p
 drop view if exists list_splitting_qora_first_comment_OIDs;
 create view list_splitting_qora_first_comment_OIDs as
 select distinct on (question_id)
-OID as first_comment_oid, question_id as parentid, 0 as ordernumber
+OID as first_comment_oid, question_id as parentid, creationdate
 from list_splitting_raw_data
 order by question_id, OID;
 
@@ -28,7 +28,7 @@ l.question_id=i.parentid where l.question_user_id=l.userid;
 drop view if exists list_splitting_qora_last_comment_OIDs;
 create view list_splitting_qora_last_comment_OIDs as
 select distinct on (question_id)
-OID as first_comment_oid, question_id as parentid, 999999 as ordernumber
+OID as first_comment_oid, question_id as parentid, creationdate
 from list_splitting_raw_data
 order by question_id, OID desc;
 
@@ -50,7 +50,7 @@ l1.question_id as comment_parentid, l1.creationdate as creationdate_new_chain
 from list_splitting_raw_data l1 join list_splitting_raw_data l2 on l1.postid=l2.postid and cast(l1.oid as int)=cast(l2.oid as int)+1
 where position('@' in l1.body)=0 and extract(epoch from l1.creationdate-l2.creationdate)>3600*72 and 
 l1.userid not in (select userid from list_splitting_raw_data where postid=l1.postid and creationdate<l1.creationdate);
-
+																										
 drop table if exists list_splitting_chain_number;
 create table list_splitting_chain_number as
 select comment_parentid, count(*) from list_splitting_splitcomments group by comment_parentid;																										
@@ -141,3 +141,82 @@ FOR counter IN 1..25 LOOP
 	select tag_id from inserter;																									
 END LOOP;																										
 END; $$	
+
+---create lists with the comments starting/ending chains---
+drop table if exists list_splitting_all_split_comments;
+create table list_splitting_all_split_comments with OIDs as																										
+select comment_oid, comment_parentid as parentid, creationdate_new_chain  as creationdate, '1-split' as occurence from list_splitting_splitcomments
+union
+select first_comment_oid, parentid, creationdate, '0-start' as occurence from list_splitting_qora_first_comment_OIDs
+union																										
+select first_comment_oid, parentid, creationdate, '2-end' as occurence from list_splitting_qora_last_comment_OIDs
+order by parentid, creationdate, occurence;
+																										
+drop view if exists list_splitting_output_chains_data_1;																									
+create view list_splitting_output_chains_data_1 as																										
+select l1.parentid, array_agg(distinct(u.userid)) users_agg, l2.comment_oid as start_comment_oid, cast(l1.comment_oid as int)+1 as end_comment_oid, l2.creationdate as start_date, l1.creationdate as end_date, cast(l1.comment_oid as int)-cast(l2.comment_oid as int)+1 as number_comments
+from list_splitting_all_split_comments l1 join list_splitting_all_split_comments l2 on
+cast(l1.OID as int)=cast(l2.OID as int)+1 and l1.parentid=l2.parentid
+join list_splitting_raw_data u on u.OID>=l2.comment_oid and u.OID<=l1.comment_oid
+where l1.occurence ='2-end' and l2.occurence in ('1-split', '0-start')
+group by l1.parentid, l2.creationdate, l1.creationdate, l1.comment_oid, l2.comment_oid, l1.occurence, l2.occurence
+order by l1.parentid, l1.creationdate;
+
+drop view if exists list_splitting_output_chains_data_2;																									
+create view list_splitting_output_chains_data_2	as																									
+select l1.parentid, array_agg(distinct(u.userid)) users_agg, l2.comment_oid as start_comment_oid, l1.comment_oid as end_comment_oid, l2.creationdate as start_date, l1.creationdate as end_date, cast(l1.comment_oid as int)-cast(l2.comment_oid as int) as number_comments
+from list_splitting_all_split_comments l1 join list_splitting_all_split_comments l2 on
+cast(l1.OID as int)=cast(l2.OID as int)+1 and l1.parentid=l2.parentid
+join list_splitting_raw_data u on u.OID>=l2.comment_oid and u.OID<l1.comment_oid
+where l1.occurence ='1-split' and l2.occurence in ('0-start', '1-split')
+group by l1.parentid, l2.creationdate, l1.creationdate, l1.comment_oid, l2.comment_oid, l1.occurence, l2.occurence
+order by l1.parentid, l1.creationdate;
+								
+drop table if exists list_splitting_output_chains_data;
+create table list_splitting_output_chains_data with oids as
+select * from list_splitting_output_chains_data_1
+union 
+select * from list_splitting_output_chains_data_2
+order by parentid, start_date;
+									   									   
+create index list_splitting_time_idx on list_splitting_output_chains_data(start_date, end_date);
+
+---selection of high interactive chains---
+---preparation: identify subsequent comments of different users---
+drop table if exists list_splitting_user_nochange;
+create table list_splitting_user_nochange as
+select l1.OID as comment_oid, l1.body, l1.userid,
+l1.question_id as comment_parentid, l1.creationdate as creationdate_new_chain																										
+from list_splitting_raw_data l1 join list_splitting_raw_data l2 on l1.postid=l2.postid and cast(l1.oid as int)=cast(l2.oid as int)+1
+where l1.userid=l2.userid;
+									   
+---identify number of comments per user, for each chain---
+create index list_splitting_id_idx on list_splitting_output_chains_data(start_comment_oid, end_comment_oid);
+create index list_splitting_nochange_id_idx on list_splitting_user_nochange(comment_oid);
+create index list_splitting_raw_id_idx on list_splitting_raw_data(oid);
+
+drop table if exists list_splitting_comments_per_chain_user;									   
+create table list_splitting_comments_per_chain_user as									   
+select c.parentid, c.oid as chain_oid, c.users_agg, c.start_date, c.end_date, r.userid, count(*) as comments_per_user from list_splitting_output_chains_data c join list_splitting_raw_data r on r.oid<end_comment_oid and r.oid>=start_comment_oid
+where r.oid not in (select comment_oid from list_splitting_user_nochange)
+group by c.parentid, c.oid, c.users_agg, c.start_date, c.end_date, r.userid;
+
+drop view if exists list_splitting_interact_chains;								   
+create view list_splitting_interact_chains as 									   
+select c.parentid, c.chain_oid, c.start_date, c.end_date, count(*) as count_users_two_comments, array_agg(c.userid) as high_intensity_users from list_splitting_comments_per_chain_user c
+where comments_per_user>1
+group by c.parentid, c.chain_oid, c.start_date, c.end_date;									   
+
+drop table if exists list_splitting_high_interact_chains; 
+create table list_splitting_high_interact_chains as									   
+select * from list_splitting_interact_chains where count_users_two_comments=2;	
+
+drop table if exists list_splitting_very_high_interact_chains; 
+create table list_splitting_very_high_interact_chains as									   
+select * from list_splitting_interact_chains where count_users_two_comments=3;	
+
+drop table if exists list_splitting_all_high_interact_chains; 
+create table list_splitting_all_high_interact_chains as									   
+select * from list_splitting_interact_chains where count_users_two_comments>1;	
+									   
+									   
