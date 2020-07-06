@@ -154,7 +154,7 @@ order by parentid, creationdate, occurence;
 																										
 drop view if exists list_splitting_output_chains_data_1;																									
 create view list_splitting_output_chains_data_1 as																										
-select l1.parentid, array_agg(distinct(u.userid)) users_agg, l2.comment_oid as start_comment_oid, cast(l1.comment_oid as int)+1 as end_comment_oid, l2.creationdate as start_date, l1.creationdate as end_date, cast(l1.comment_oid as int)-cast(l2.comment_oid as int)+1 as number_comments
+select l1.parentid, array_agg(distinct(u.userid)) users_agg, l2.comment_oid as start_comment_oid, cast(l1.comment_oid as int)+1 as end_comment_oid, l2.creationdate as start_date, l1.creationdate as end_date, cast(l1.comment_oid as int)-cast(l2.comment_oid as int)+1 as number_comments, sum(array_length(array_remove(string_to_array(u.body, ' '), ''),1)) as word_sum
 from list_splitting_all_split_comments l1 join list_splitting_all_split_comments l2 on
 cast(l1.OID as int)=cast(l2.OID as int)+1 and l1.parentid=l2.parentid
 join list_splitting_raw_data u on u.OID>=l2.comment_oid and u.OID<=l1.comment_oid
@@ -164,20 +164,23 @@ order by l1.parentid, l1.creationdate;
 
 drop view if exists list_splitting_output_chains_data_2;																									
 create view list_splitting_output_chains_data_2	as																									
-select l1.parentid, array_agg(distinct(u.userid)) users_agg, l2.comment_oid as start_comment_oid, l1.comment_oid as end_comment_oid, l2.creationdate as start_date, l1.creationdate as end_date, cast(l1.comment_oid as int)-cast(l2.comment_oid as int) as number_comments
+select l1.parentid, array_agg(distinct(u.userid)) users_agg, l2.comment_oid as start_comment_oid, l1.comment_oid as end_comment_oid, l2.creationdate as start_date, l1.creationdate as end_date, cast(l1.comment_oid as int)-cast(l2.comment_oid as int) as number_comments, sum(array_length(array_remove(string_to_array(u.body, ' '), ''),1)) as word_sum
 from list_splitting_all_split_comments l1 join list_splitting_all_split_comments l2 on
 cast(l1.OID as int)=cast(l2.OID as int)+1 and l1.parentid=l2.parentid
 join list_splitting_raw_data u on u.OID>=l2.comment_oid and u.OID<l1.comment_oid
 where l1.occurence ='1-split' and l2.occurence in ('0-start', '1-split')
 group by l1.parentid, l2.creationdate, l1.creationdate, l1.comment_oid, l2.comment_oid, l1.occurence, l2.occurence
 order by l1.parentid, l1.creationdate;
-								
+									   
 drop table if exists list_splitting_output_chains_data;
 create table list_splitting_output_chains_data with oids as
 select * from list_splitting_output_chains_data_1
 union 
 select * from list_splitting_output_chains_data_2
 order by parentid, start_date;
+
+select * from list_splitting_output_chains_data;
+									   
 									   									   
 create index list_splitting_time_idx on list_splitting_output_chains_data(start_date, end_date);
 
@@ -195,28 +198,38 @@ create index list_splitting_id_idx on list_splitting_output_chains_data(start_co
 create index list_splitting_nochange_id_idx on list_splitting_user_nochange(comment_oid);
 create index list_splitting_raw_id_idx on list_splitting_raw_data(oid);
 
-drop table if exists list_splitting_comments_per_chain_user;									   
+drop table if exists list_splitting_comments_per_chain_user cascade;									   
 create table list_splitting_comments_per_chain_user as									   
-select c.parentid, c.oid as chain_oid, c.users_agg, c.start_date, c.end_date, r.userid, count(*) as comments_per_user from list_splitting_output_chains_data c join list_splitting_raw_data r on r.oid<end_comment_oid and r.oid>=start_comment_oid
+select c.parentid, c.oid as chain_oid, c.users_agg, c.start_date, c.end_date, c.word_sum, c.number_comments, r.userid, count(*) as comments_per_user from list_splitting_output_chains_data c join list_splitting_raw_data r on r.oid<end_comment_oid and r.oid>=start_comment_oid
 where r.oid not in (select comment_oid from list_splitting_user_nochange)
-group by c.parentid, c.oid, c.users_agg, c.start_date, c.end_date, r.userid;
+group by c.parentid, c.oid, c.users_agg, c.start_date, c.end_date, c.word_sum, c.number_comments, r.userid;
 
 drop view if exists list_splitting_interact_chains;								   
 create view list_splitting_interact_chains as 									   
-select c.parentid, c.chain_oid, c.start_date, c.end_date, count(*) as count_users_two_comments, array_agg(c.userid) as high_intensity_users from list_splitting_comments_per_chain_user c
+select c.parentid, c.chain_oid, c.start_date, c.end_date, c.word_sum, c.number_comments, count(*) as count_users_two_comments, array_agg(c.userid) as high_intensity_users from list_splitting_comments_per_chain_user c
 where comments_per_user>1
-group by c.parentid, c.chain_oid, c.start_date, c.end_date;									   
+group by c.parentid, c.chain_oid, c.start_date, c.end_date, c.word_sum, c.number_comments;									   
 
 drop table if exists list_splitting_high_interact_chains; 
 create table list_splitting_high_interact_chains as									   
 select * from list_splitting_interact_chains where count_users_two_comments=2;	
 
+drop table if exists list_splitting_high_interact_chains_agg; 									   
+create table list_splitting_high_interact_chains_agg as
+select parentid, count(*) from list_splitting_high_interact_chains group by parentid;									   
+									   
 drop table if exists list_splitting_very_high_interact_chains; 
 create table list_splitting_very_high_interact_chains as									   
 select * from list_splitting_interact_chains where count_users_two_comments>2;	
 
+drop table if exists list_splitting_very_high_interact_chains_agg; 									   
+create table list_splitting_very_high_interact_chains_agg as
+select parentid, count(*) from list_splitting_very_high_interact_chains group by parentid;									   
+									   
 drop table if exists list_splitting_all_high_interact_chains; 
 create table list_splitting_all_high_interact_chains as									   
 select * from list_splitting_interact_chains where count_users_two_comments>1;	
-									   
-									   
+
+drop table if exists list_splitting_all_high_interact_chains_agg; 									   
+create table list_splitting_all_high_interact_chains_agg as
+select parentid, count(*) from list_splitting_all_high_interact_chains group by parentid;									   									   

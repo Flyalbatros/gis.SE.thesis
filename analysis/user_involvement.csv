@@ -1,0 +1,16 @@
+---users---
+---to fix: moderator addition---
+select l.*, p.owneruserid=any(high_intensity_users) as author_present, p.score, p.favoritecount, m.mod_id
+from list_splitting_interact_chains l join posts_gis p on l.parentid=p.row_id 
+left join mod_users m on m.mod_id=any(high_intensity_users)
+where l.count_users_two_comments>1 and p.parentid=-99;
+---add time filter 2017-2019!!!---
+select l.*, p.score as a_score, p2.favoritecount, p.owneruserid=any(high_intensity_users) as a_author_present, p2.owneruserid=any(high_intensity_users) as q_author_present
+from list_splitting_interact_chains l join posts_gis p on l.parentid=p.row_id 
+join posts_gis p2 on p.parentid=p2.row_id
+where l.count_users_two_comments>1 and p.parentid<>-99;
+
+select * from posts_gis;
+select * from mod_users;
+select oid, * from list_splitting_output_chains_data 
+where parentid=438;

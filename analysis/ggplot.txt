@@ -1,0 +1,4 @@
+p <- ggplot(wordcount_histogram, aes(x=word_count, fill=high_interaction)) +
++     geom_histogram(binwidth=10)
+
+p + coord_cartesian(xlim = c(0, 700))

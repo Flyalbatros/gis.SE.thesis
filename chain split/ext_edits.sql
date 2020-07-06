@@ -29,6 +29,8 @@ and e.userid=any(l.users_agg)
 and l.parentid=e.postid
 group by l.parentid, l.start_date, l.users_agg, l.end_date, l.number_comments;
 
+
+
 ---get the sum of edits linked to the gg
 select parentid, sum(number_edits) from edits_chains_output_merged
 group by parentid;
