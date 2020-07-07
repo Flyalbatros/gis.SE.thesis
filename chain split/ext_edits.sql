@@ -22,14 +22,18 @@ create index edits_output_10percent_time_idx on edits_output_10percent_rule(crea
 
 drop table if exists edits_chains_output_merged;
 create table edits_chains_output_merged as
-select l.parentid, l.users_agg, l.start_date, l.end_date, l.number_comments, count(row_id) as number_edits, array_agg(row_id) as edit_id_agg, array_agg(rolled_back) as edit_rollback_agg
-from list_splitting_output_chains_data l left join edits_output_10percent_rule e 
+select l.parentid, l.high_intensity_users, l.start_date, l.end_date, l.number_comments, count(row_id) as number_edits, array_agg(row_id) as edit_id_agg, array_agg(rolled_back) as edit_rollback_agg, 'false' as rollback_presence
+from list_splitting_interact_chains l left join edits_output_10percent_rule e 
 on e.creationdate+interval '10minutes'>l.start_date and e.creationdate-interval '10 minutes'<l.end_date
-and e.userid=any(l.users_agg)
+and e.userid=any(l.high_intensity_users)
 and l.parentid=e.postid
-group by l.parentid, l.start_date, l.users_agg, l.end_date, l.number_comments;
+group by l.parentid, l.start_date, l.high_intensity_users, l.end_date, l.number_comments;
+
+update edits_chains_output_merged set rollback_presence = true where edit_rollback_agg && array[true];
 
 
+
+select * from list_splitting_interact_chains;
 
 ---get the sum of edits linked to the gg
 select parentid, sum(number_edits) from edits_chains_output_merged
