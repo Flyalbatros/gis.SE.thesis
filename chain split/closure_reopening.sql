@@ -11,7 +11,7 @@ create table spstats_closed_posts as
 select postid, count(*), array_agg(creationdate) from edits_gis where posthistorytypeid=10 group by postid order by count(*) desc;
 
 drop table if exists spstats_reopened_posts;
-create table spstats_reopenened_posts as
+create table spstats_reopened_posts as
 select postid, count(*), array_agg(creationdate) from edits_gis where posthistorytypeid=11 group by postid order by count(*) desc;
 
 drop table if exists spstats_deleted_posts;

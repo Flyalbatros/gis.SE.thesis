@@ -13,11 +13,11 @@ where t1.parentid=-99 group by t1.question_id, t1.high_interaction_chains, t1.vi
 update thread_analysis_interaction_count set number_hi_chains = 0 
 where number_hi_chains is null;
 
+drop table if exists thread_analysis_stats_view_per_day;
 create table thread_analysis_stats_view_per_day as
 select number_hi_chains, avg(views_per_day), stddev(views_per_day), 
 percentile_disc(0.1) within group (order by views_per_day) as percentile_10, percentile_disc(0.9) within group (order by views_per_day) as percentile_90 
 from thread_analysis_interaction_count 
-where number_hi_chains<3
 group by number_hi_chains;
 
 drop table if exists thread_analysis_stats_view_total;
@@ -25,8 +25,9 @@ create table thread_analysis_stats_view_total as
 select number_hi_chains, count(*), avg(viewcount), stddev(viewcount), 
 percentile_disc(0.1) within group (order by viewcount) as percentile_10, percentile_disc(0.9) within group (order by viewcount) as percentile_90 
 from thread_analysis_interaction_count 
-where number_hi_chains<3
 group by number_hi_chains;
+
+select * from thread_analysis_stats_view_per_day;
 
 --- get the up/downvotes ---
 create view thread_analysis_upvotes_prep as
@@ -74,22 +75,34 @@ select question_id, count(*) as answer_count from sampling_qa_co_prep where answ
 create table thread_analysis_typology_prep as
 select t.question_id, t.number_hi_chains, a.answer_count from thread_analysis_interaction_count t left join thread_analysis_typology_raw a on t.question_id=a.question_id;
 
+drop table if exists thread_analysis_typology_out;
 create table thread_analysis_typology_out as
-select number_hi_chains, avg(answer_count), stddev(answer_count), count(*) from thread_analysis_typology_prep group by number_hi_chains;
+select number_hi_chains, avg(answer_count), stddev(answer_count), 
+percentile_disc(0.1) within group (order by answer_count) as percentile_10, 
+percentile_disc(0.9) within group (order by answer_count) as percentile_90 
+from thread_analysis_typology_prep group by number_hi_chains;
 
+select * from thread_analysis_typology_out;
 ---tags
 
 create table sampling_top_50_tags_exp as
 select tagname, s.post_count from tags_gis t join sampling_top_50_tags s on t.row_id=s.row_id order by s.post_count desc;
 
+drop table if exists thread_analysis_tags_raw;
 create table thread_analysis_tags_raw as
 select t.number_hi_chains, s.agg_tag_ids from thread_analysis_interaction_count t join sampling_post_tags s on t.question_id=s.post_id;
+
+select * from thread_analysis_tags_raw_top
 
 drop table if exists thread_analysis_tags_raw_top;
 create table thread_analysis_tags_raw_top as
 select tagname, number_hi_chains, count(*) as num_occurences from tags_gis t join thread_analysis_tags_raw r on t.row_id=any(r.agg_tag_ids) group by number_hi_chains, tagname order by number_hi_chains, num_occurences desc;
 
+drop table if exists thread_analysis_tags_output;
 create table thread_analysis_tags_output as
-select t1.tagname, t1.num_occurences as num_occurences_zero, t2.num_occurences as num_occurences_one, t1.num_occurences/162175.0 freq_occurences_zero, t2.num_occurences/10204.0 freq_occurences_one, abs((t1.num_occurences/162175.0) - (t2.num_occurences/10204.0)) as diff_frequency 
-from thread_analysis_tags_raw_top t1 left join thread_analysis_tags_raw_top t2 on t1.tagname=t2.tagname
-where t1.number_hi_chains=0 and t2.number_hi_chains=1 group by t1.tagname, t1.num_occurences, t2.num_occurences order by diff_frequency desc;
+select t1.tagname, sum(t1.num_occurences) as num_occurences_zero, sum(t2.num_occurences) as num_occurences_one, sum(t1.num_occurences)/162175.0 freq_occurences_zero, sum(t2.num_occurences)/10204.0 freq_occurences_one, ((sum(t1.num_occurences)/162175.0) - (sum(t2.num_occurences)/10204.0)) as diff_frequency 
+from thread_analysis_tags_raw_top t1 full join thread_analysis_tags_raw_top t2 on t1.tagname=t2.tagname
+where t1.number_hi_chains=0 and t2.number_hi_chains=1 group by t1.tagname, t1.num_occurences order by diff_frequency desc;
+
+select * from thread_analysis_tags_output;
+

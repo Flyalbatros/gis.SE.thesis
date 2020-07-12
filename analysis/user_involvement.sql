@@ -9,6 +9,7 @@ select sum(number_edits) from chain_level_stats_a; ---1227
 select sum(number_edits) from chain_level_stats_q; ---2325
 select count(*) from edits_output_10percent_rule where extract(year from creationdate)<2020 and extract(year from creationdate)>2016; ---28883
 
+select * from edits_output_10percent_rule;
 ---users---
 drop table if exists chain_level_stats_q;
 create table chain_level_stats_q as 
@@ -53,6 +54,10 @@ select count(*) from chain_level_stats_a; ---2951
 
 select count(*) from chain_level_stats_q where author_present is true; ---4831
 select count(*) from chain_level_stats_q; ---5004
+
+---edits
+select count(*) from chain_level_stats_a where number_edits>0 and edit_mod_presence; ---969 out of 2951--- mod in 44 cases
+select count(*) from chain_level_stats_q where number_edits>0 and edit_mod_presence; ---1697 out of 5004--- mod in 52 cases
 
 
 
@@ -109,16 +114,18 @@ comment_count>answer_count and comment_count>question_count and comment_count>ed
 edits_count>answer_count and edits_count>question_count and edits_count>comment_count as mainly_edits,
 question_count>answer_count as question_more_answer,
 comment_count<edits_count as comment_more_edits																							  
-from chain_level_user_profiles;
+from chain_level_user_profiles
+where question_count+answer_count+comment_count+edits_count>10;
 
+select count(*) from chain_level_user_outputs
 ---output---
 select mainly_comments, mainly_edits, mainly_answers, mainly_questions, count(*)/10089.0 as frequency 
 from chain_level_user_outputs group by mainly_comments, mainly_edits, mainly_answers, mainly_questions;
 
-select question_more_answer, count(*)/10089.0 as frequency 
+select question_more_answer, count(*)/9975.0 as frequency 
 from chain_level_user_outputs group by question_more_answer;
 																							  
-select comment_more_edits, count(*)/10089.0 as frequency 
+select comment_more_edits, count(*)/9975.0 as frequency 
 from chain_level_user_outputs group by comment_more_edits;
 													  
 																							  

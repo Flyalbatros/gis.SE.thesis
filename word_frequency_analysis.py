@@ -107,6 +107,7 @@ def process(agg_data):
     ordered_words = sorted(outword_dict.items(), key=operator.itemgetter(1))
     hi50 = ordered_words[0:50]
     nor50 = ordered_words[-50:-1]
+    print(counter[0], counter[1])
     return(hi50, nor50)
 
 def exporter(result, outfile_nm):

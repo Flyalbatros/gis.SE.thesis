@@ -9,7 +9,7 @@ from posts_gis order by row_id desc;
 
 drop table if exists q_a_char_interact_output;
 create table q_a_char_interact_output as
-select question_id, parentid<>-99 as answer, word_count, code_present, ext_ref_present, img_present, question_id in (select parentid from list_splitting_all_high_interact_chains_agg) as high_interaction,
+select question_id, parentid<>-99 as answer, words, word_count, code_present, ext_ref_present, img_present, question_id in (select parentid from list_splitting_all_high_interact_chains_agg) as high_interaction,
 question_id in (select parentid from list_splitting_very_high_interact_chains_agg) as very_high_interaction 
 from sampling_qora_co_prep s left join q_a_characteristics q on s.question_id=q.row_id;
 									   
